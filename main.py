@@ -16,7 +16,7 @@ dp = Dispatcher()
 @dp.message()
 async def on_message(message: Message):
     await message.answer("Качаю...")
-    path = download(message.text)
+    path = await asyncio.to_thread(download, message.text)
     await message.answer_video(FSInputFile(path))
 
 asyncio.run(dp.start_polling(bot))
