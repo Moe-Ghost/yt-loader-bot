@@ -1,6 +1,7 @@
 import os
 import re
 import asyncio
+import logging
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher
 from aiogram.types import Message, FSInputFile
@@ -24,12 +25,20 @@ def extract_video_id(text: str)-> str | None:
 async def on_message(message: Message):
     video_id = extract_video_id(message.text or "")
     if not video_id:
-        await message.answer("Send me a YouTube link")
+        await message.answer("Жду ссылку на видео")
         return
     await message.answer("Качаю...")
     url = f'https://www.youtube.com/watch?v={video_id}'
-    path = await asyncio.to_thread(download, url)
-    await message.answer_video(FSInputFile(path))
+    path = None
+    try:
+        path = await asyncio.to_thread(download, url)
+        await message.answer_video(FSInputFile(path))
+    except Exception:
+        logging.exception("Failed to process %s", video_id)
+        await message.answer("Не могу скачать")
+    finally:
+        if path and os.path.exists(path):
+            os.remove(path)
 
 asyncio.run(dp.start_polling(bot))
 
